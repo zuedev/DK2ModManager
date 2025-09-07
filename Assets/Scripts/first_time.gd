@@ -108,37 +108,17 @@ func _on_steaminstallfinder_pressed() -> void:
 	_find_game_path()
 
 func _find_game_path() -> void:
-	#var fileaccess: Dictionary = OS.execute_with_pipe("cmd.exe" ,["/c", ffglobals.steamInstallHelper], true)
-	#var output: FileAccess = fileaccess["stdio"]
-	#var steampath = output.get_line()
-	var steampath: String = ""
-	if ffglobals.buildplatform == "Windows":
-		var getInstallDir = load("uid://ck05bvw4s58ui")
-		var cs = getInstallDir.new()
-		steampath = cs.GetSteamDir()
-	# I'm done with the FileAccess so I close it here
-	#output.close()
-	#fileaccess["stderr"].close()
+	var steamLibraries = SteamFinder.GetSteamLibraryDirectories()
+	for library in steamLibraries:
+		var dk2path = library.path_join("common/DoorKickers2")
+		if DirAccess.dir_exists_absolute(dk2path):
+			ffglobals.installDirectory = dk2path
+			ffglobals.workshopDirectory = library.path_join("workshop")
+			completeFirstTime()
+			return
+	
+	OS.alert("Unable to Locate your Install Directory Automatically, Please locate it manually", "Unable to Find DoorKickers 2 Install Directory")
 
-	steampath = "\\".join([steampath,"steamapps"])
-	if FileAccess.file_exists(steampath.path_join("libraryfolders.vdf")):
-		# Open the File
-		var vdf: FileAccess = FileAccess.open(steampath.path_join("libraryfolders.vdf"),FileAccess.READ)
-		# Dump the File
-		var vdfoutput = vdf.get_as_text()
-		# Close the File since we have the Output
-		vdf.close()
-		var path = _returnDK2Path(vdfoutput)
-		if path == "":
-			print("Game Path wasn't Found")
-		path = path.split("\"", false)
-		path = path[path.size() - 1].replace("\\\\", "\\")
-		ffglobals.installDirectory = path.path_join("steamapps/common/DoorKickers2").replace("/","\\")
-		ffglobals.workshopDirectory = path.path_join("steamapps/workshop").replace("/","\\")
-
-		completeFirstTime()
-	else:
-		OS.alert("Unable to Locate your Install Directory Automatically, Please locate it manually", "Unable to Find DoorKickers 2 Install Directory")
 
 func _returnDK2Path(vdfoutput: String) -> String:
 	var s = vdfoutput.split("\n")
