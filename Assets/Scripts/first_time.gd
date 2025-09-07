@@ -11,6 +11,25 @@ func _ready() -> void:
 	if ffglobals.buildplatform == "Linux":
 		steaminstallfinder.hide()
 
+	if OS.is_debug_build():
+		var skip_button = Button.new()
+		skip_button.text = "Skip First Time Setup (Dev)"
+		$ColorRect/Panel2/BoxContainer.add_child(skip_button)
+		skip_button.connect("pressed", _on_skip_pressed)
+
+func _on_skip_pressed() -> void:
+	skipFirstTime()
+
+func skipFirstTime() -> void:
+	visible = false
+	ffglobals.installDirectory = ""
+	ffglobals.workshopDirectory = ""
+	ffglobals.appdataDirectory = ""
+	$"../Timer".start()
+	await $"../Timer".timeout
+	ffglobals.mainWindow.startup()
+
+
 func completeFirstTime() -> void:
 	visible = false
 

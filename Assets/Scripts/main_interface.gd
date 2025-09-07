@@ -62,9 +62,9 @@ func _settings_buttons(idx: int) -> void:
 		1:
 			lightMode = !lightMode
 			if lightMode:
-				get_tree().root.theme = load("res://Assets/Themes/light_theme.tres")
+				background.theme = load("res://Assets/Themes/light_theme.tres")
 			else:
-				get_tree().root.theme = load("res://Assets/Themes/main_theme.tres")
+				background.theme = load("res://Assets/Themes/main_theme.tres")
 		# AAAAAA
 		2:
 			$AudioStreamPlayer.play(0)
@@ -208,6 +208,8 @@ func _addMissingMod(m_name: String, id: String) -> void:
 	m.construct(m_name, id)
 
 func startup() -> void:
+	if ffglobals.installDirectory == "":
+		return
 	# Parse the Saved Configuration
 	var settingsSaveContent: Dictionary = {}
 
