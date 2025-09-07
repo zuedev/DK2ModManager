@@ -231,12 +231,14 @@ layout_mode = 2
 theme_override_fonts/font = ExtResource("5_bortl")
 text = "Settings"
 flat = false
-item_count = 2
+item_count = 3
 popup/item_0/text = " Configuration"
 popup/item_0/id = 0
 popup/item_0/disabled = true
-popup/item_1/text = " Don't Click This"
+popup/item_1/text = " Toggle Light Mode"
 popup/item_1/id = 1
+popup/item_2/text = " Don't Click This"
+popup/item_2/id = 2
 
 [node name="modlistMenu" type="MenuButton" parent="background/menubuttons"]
 layout_mode = 2

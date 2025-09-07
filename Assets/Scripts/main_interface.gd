@@ -32,6 +32,7 @@ var enabledSearch: String = ""
 # This is the String we store the end Result Mods Element for the Options.xml
 var modsString: String = ""
 var modsCompatNumber: String = "35"
+var lightMode: bool = false
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -57,8 +58,15 @@ func _settings_buttons(idx: int) -> void:
 		# Configuration
 		0:
 			print("Config")
-		# AAAAAA
+		# Light Mode Toggle
 		1:
+			lightMode = !lightMode
+			if lightMode:
+				get_tree().root.theme = load("res://Assets/Themes/light_theme.tres")
+			else:
+				get_tree().root.theme = load("res://Assets/Themes/main_theme.tres")
+		# AAAAAA
+		2:
 			$AudioStreamPlayer.play(0)
 		# Should never happen
 		_:
