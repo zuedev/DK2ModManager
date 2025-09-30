@@ -5,6 +5,7 @@ extends Control
 @onready var mod_name_label: Label = %Name
 @onready var author_name_label: Label = %Author
 @onready var source: Label = %Source
+@onready var dependencies_label: Label = %Dependencies
 
 @onready var loadunload: Button = $Panel/BoxContainer/BoxContainer/loadunload
 
@@ -62,8 +63,10 @@ func construct(pic: Texture2D, modname: String, authorname: String, isLocal: boo
 		name = path.split("/", false)[-1]
 		source.text = "Local"
 		$openinsteam.visible = false
+		dependencies_label.text = ""
 	else:
 		source.text = "Workshop"
+		_check_workshop_dependencies(modID)
 
 	# Fix the Path because there is a random Newline in it
 	mod_path = path
@@ -150,3 +153,76 @@ func _on_movedown_pressed() -> void:
 
 func _on_openinsteam_pressed() -> void:
 	OS.shell_open("steam://openurl/https://steamcommunity.com/workshop/filedetails/?id={0}".format([mod_ID]))
+
+func _check_workshop_dependencies(workshop_id: String) -> void:
+	# Check if GodotSteam is available
+	if !Engine.has_singleton("Steam"):
+		dependencies_label.text = "Dependencies: GodotSteam not available"
+		return
+
+	var Steam = Engine.get_singleton("Steam")
+
+	# Initialize Steam if not already initialized
+	var is_on_steam_deck: bool = Steam.isSteamRunningOnSteamDeck()
+	var is_online: bool = Steam.loggedOn()
+
+	if !is_online:
+		dependencies_label.text = "Dependencies: Not logged into Steam"
+		return
+
+	# Convert string ID to int
+	var item_id: int = int(workshop_id)
+
+	if item_id == 0:
+		dependencies_label.text = ""
+		return
+
+	# Request item details to get dependency information
+	Steam.createQueryUGCDetailsRequest([item_id])
+	var query_handle = Steam.createQueryUGCDetailsRequest([item_id])
+
+	# Set return children (dependencies)
+	Steam.setReturnChildren(query_handle, true)
+
+	# Send the query
+	Steam.sendQueryUGCRequest(query_handle)
+
+	# Connect to the signal for when results are ready
+	if !Steam.steam_ugc_query_completed.is_connected(_on_workshop_query_completed):
+		Steam.steam_ugc_query_completed.connect(_on_workshop_query_completed)
+
+func _on_workshop_query_completed(query_handle: int, result: int) -> void:
+	var Steam = Engine.get_singleton("Steam")
+
+	# Check if query was successful
+	if result != 1: # k_EResultOK = 1
+		dependencies_label.text = "Dependencies: Query failed"
+		Steam.releaseQueryUGCRequest(query_handle)
+		return
+
+	# Get the number of results
+	var num_results: int = Steam.getQueryUGCNumResults(query_handle)
+
+	if num_results == 0:
+		dependencies_label.text = ""
+		Steam.releaseQueryUGCRequest(query_handle)
+		return
+
+	# Get details for the first (and only) result
+	var details: Dictionary = Steam.getQueryUGCResult(query_handle, 0)
+
+	# Get children (dependencies)
+	var num_children: int = Steam.getQueryUGCNumChildren(query_handle, 0)
+
+	if num_children > 0:
+		var dependency_ids: Array = []
+		for i in range(num_children):
+			var child_id: int = Steam.getQueryUGCChild(query_handle, 0, i)
+			dependency_ids.append(str(child_id))
+
+		dependencies_label.text = "Dependencies: {0} item(s) - IDs: {1}".format([num_children, ", ".join(dependency_ids)])
+	else:
+		dependencies_label.text = "Dependencies: None"
+
+	# Release the query handle
+	Steam.releaseQueryUGCRequest(query_handle)
